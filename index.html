@@ -3,13 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#000000">
-
-<!-- iOS 添加到主屏更像 App（不影响微信/安卓，建议保留） -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Unity WebGL Player | 明末造船记</title>
+    <meta name="viewport" content="width=device-width,height=device-height,user-scalable=no" />
+    <title>Unity WebGL Player | 明朝造船记</title>
     <style>
       * {
         border: 0;
@@ -19,41 +14,10 @@
     </style>
     <link rel="shortcut icon" href="TemplateData/favicon.ico" />
     <link rel="stylesheet" href="TemplateData/style.css" />
-  
-    <style>
-      /* --- Added: reduce white bars & handle safe-area on mobile/WeChat --- */
-      html, body {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        height: 100%;
-        background: #000;
-        overflow: hidden;
-      }
-      #unity-container {
-        background: #000;
-        height: var(--app-h, 100vh);
-        width: var(--app-w, 100vw);
-        padding-top: env(safe-area-inset-top);
-        padding-right: env(safe-area-inset-right);
-        padding-bottom: env(safe-area-inset-bottom);
-        padding-left: env(safe-area-inset-left);
-        box-sizing: border-box;
-      }
-      #unity-canvas {
-        width: 100%;
-        height: 100%;
-        display: block;
-        background: #000;
-      }
-      /* optional: hide Unity footer (can reveal white area on some WebViews) */
-      #unity-footer { display: none !important; }
-    </style>
-
   </head>
   <body>
     <div id="unity-container" class="unity-desktop">
-      <canvas id="unity-canvas" width=1080 height=2160 tabindex="-1"></canvas>
+      <canvas id="unity-canvas" width=2340 height=1080 tabindex="-1"></canvas>
       <div id="unity-loading-bar">
         <div id="unity-logo"></div>
         <div id="unity-progress-bar-empty">
@@ -64,7 +28,7 @@
       <div id="unity-footer">
         <div id="unity-webgl-logo"></div>
         <div id="unity-fullscreen-button"></div>
-        <div id="unity-build-title">明末造船记</div>
+        <div id="unity-build-title">明朝造船记</div>
       </div>
     </div>
     <script>
@@ -75,28 +39,6 @@
             var progressBarFull = document.querySelector("#unity-progress-bar-full");
             var fullscreenButton = document.querySelector("#unity-fullscreen-button");
             var warningBanner = document.querySelector("#unity-warning");
-            // --- Added: robust viewport sizing (fixes iOS/Android/WeChat address-bar / WebView UI changes) ---
-            function applyViewportSize() {
-              var vv = window.visualViewport;
-              var h = vv && typeof vv.height === 'number' ? vv.height : window.innerHeight;
-              var w = vv && typeof vv.width === 'number' ? vv.width : window.innerWidth;
-
-              document.documentElement.style.setProperty('--app-h', h + 'px');
-              document.documentElement.style.setProperty('--app-w', w + 'px');
-            }
-
-            // Add listeners with max compatibility (some WebViews don't support options objects)
-            function addEvt(target, name, fn) {
-              if (!target || !target.addEventListener) return;
-              try { target.addEventListener(name, fn, { passive: true }); }
-              catch (e) { target.addEventListener(name, fn, false); }
-            }
-
-            addEvt(window, 'resize', applyViewportSize);
-            addEvt(window, 'orientationchange', applyViewportSize);
-            addEvt(window.visualViewport, 'resize', applyViewportSize);
-            addEvt(window.visualViewport, 'scroll', applyViewportSize);
-
 
             // Shows a temporary message banner/ribbon for a few seconds, or
             // a permanent error message on top of the canvas if type=='error'.
@@ -131,7 +73,7 @@
               symbolsUrl: buildUrl + "/CutWeb.symbols.json",
               streamingAssetsUrl: "StreamingAssets",
               companyName: "DefaultCompany",
-              productName: "明末造船记",
+              productName: "明朝造船记",
               productVersion: "0.1",
               showBanner: unityShowBanner,
             };
@@ -153,9 +95,6 @@
               container.className = "unity-mobile";
               canvas.className = "unity-mobile";
 
-              applyViewportSize();
-
-
               // To lower canvas resolution on mobile devices to gain some
               // performance, uncomment the following line:
               // config.devicePixelRatio = 1;
@@ -164,12 +103,9 @@
             } else {
               // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
 
-              canvas.style.width = "1080px";
-              canvas.style.height = "2160px";
+              canvas.style.width = "2340px";
+              canvas.style.height = "1080px";
             }
-
-            applyViewportSize();
-            setTimeout(applyViewportSize, 200);
 
             loadingBar.style.display = "block";
 
