@@ -3,8 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta name="viewport"
-      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#000000">
 
 <!-- iOS 添加到主屏更像 App（不影响微信/安卓，建议保留） -->
@@ -22,7 +21,7 @@
     <link rel="stylesheet" href="TemplateData/style.css" />
   
     <style>
-      /* --- Mobile fullscreen/safe-area overrides (added) --- */
+      /* --- Added: reduce white bars & handle safe-area on mobile/WeChat --- */
       html, body {
         margin: 0;
         padding: 0;
@@ -30,50 +29,31 @@
         height: 100%;
         background: #000;
         overflow: hidden;
-        touch-action: none;
-        -webkit-user-select: none;
-        user-select: none;
       }
-
-      /* Use a CSS variable for true visible height (fixes iOS/WeChat 100vh issues) */
       #unity-container {
-        position: fixed;
-        inset: 0;
         background: #000;
-        overflow: hidden;
-
-        /* Safe areas (notch / rounded corners / home indicator) */
+        height: var(--app-h, 100vh);
+        width: var(--app-w, 100vw);
         padding-top: env(safe-area-inset-top);
         padding-right: env(safe-area-inset-right);
         padding-bottom: env(safe-area-inset-bottom);
         padding-left: env(safe-area-inset-left);
-
-        /* Legacy iOS syntax */
-        padding-top: constant(safe-area-inset-top);
-        padding-right: constant(safe-area-inset-right);
-        padding-bottom: constant(safe-area-inset-bottom);
-        padding-left: constant(safe-area-inset-left);
-
         box-sizing: border-box;
-
-        height: var(--app-h, 100vh);
-        width: var(--app-w, 100vw);
       }
-
       #unity-canvas {
-        width: 100% !important;
-        height: 100% !important;
+        width: 100%;
+        height: 100%;
         display: block;
         background: #000;
       }
-
-      /* Remove Unity footer bar to maximize usable area (especially in WebViews like WeChat) */
+      /* optional: hide Unity footer (can reveal white area on some WebViews) */
       #unity-footer { display: none !important; }
     </style>
-</head>
+
+  </head>
   <body>
     <div id="unity-container" class="unity-desktop">
-      <canvas id="unity-canvas" tabindex="-1"></canvas>
+      <canvas id="unity-canvas" width=1080 height=2160 tabindex="-1"></canvas>
       <div id="unity-loading-bar">
         <div id="unity-logo"></div>
         <div id="unity-progress-bar-empty">
@@ -95,31 +75,27 @@
             var progressBarFull = document.querySelector("#unity-progress-bar-full");
             var fullscreenButton = document.querySelector("#unity-fullscreen-button");
             var warningBanner = document.querySelector("#unity-warning");
-            // --- Viewport sizing helper (added): fixes iOS/Android/WeChat address-bar & WebView UI resizing ---
+            // --- Added: robust viewport sizing (fixes iOS/Android/WeChat address-bar / WebView UI changes) ---
             function applyViewportSize() {
               var vv = window.visualViewport;
-              var h = vv ? vv.height : window.innerHeight;
-              var w = vv ? vv.width : window.innerWidth;
+              var h = vv && typeof vv.height === 'number' ? vv.height : window.innerHeight;
+              var w = vv && typeof vv.width === 'number' ? vv.width : window.innerWidth;
 
               document.documentElement.style.setProperty('--app-h', h + 'px');
               document.documentElement.style.setProperty('--app-w', w + 'px');
-
-              // Keep container/canvas stretched to the real visible area
-              container.style.height = h + 'px';
-              container.style.width  = w + 'px';
-              canvas.style.width = '100%';
-              canvas.style.height = '100%';
             }
 
-            // Prevent page scrolling/bounce revealing background
-            document.addEventListener('touchmove', function(e){ e.preventDefault(); }, { passive: false });
-
-            window.addEventListener('resize', applyViewportSize);
-            window.addEventListener('orientationchange', applyViewportSize);
-            if (window.visualViewport) {
-              window.visualViewport.addEventListener('resize', applyViewportSize);
-              window.visualViewport.addEventListener('scroll', applyViewportSize);
+            // Add listeners with max compatibility (some WebViews don't support options objects)
+            function addEvt(target, name, fn) {
+              if (!target || !target.addEventListener) return;
+              try { target.addEventListener(name, fn, { passive: true }); }
+              catch (e) { target.addEventListener(name, fn, false); }
             }
+
+            addEvt(window, 'resize', applyViewportSize);
+            addEvt(window, 'orientationchange', applyViewportSize);
+            addEvt(window.visualViewport, 'resize', applyViewportSize);
+            addEvt(window.visualViewport, 'scroll', applyViewportSize);
 
 
             // Shows a temporary message banner/ribbon for a few seconds, or
@@ -170,16 +146,15 @@
             if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
               // Mobile device style: fill the whole browser client area with the game canvas:
 
-                            // Ensure a single, correct viewport meta (avoid duplicates that can cause white bars / wrong sizing)
-              var meta = document.querySelector('meta[name="viewport"]');
-              if (!meta) {
-                meta = document.createElement('meta');
-                meta.name = 'viewport';
-                document.getElementsByTagName('head')[0].appendChild(meta);
-              }
-              meta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
-container.className = "unity-mobile";
+              var meta = document.createElement('meta');
+              meta.name = 'viewport';
+              meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+              document.getElementsByTagName('head')[0].appendChild(meta);
+              container.className = "unity-mobile";
               canvas.className = "unity-mobile";
+
+              applyViewportSize();
+
 
               // To lower canvas resolution on mobile devices to gain some
               // performance, uncomment the following line:
@@ -189,11 +164,12 @@ container.className = "unity-mobile";
             } else {
               // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
 
-              canvas.style.width = "100%";
-              canvas.style.height = "100%";
+              canvas.style.width = "1080px";
+              canvas.style.height = "2160px";
             }
 
             applyViewportSize();
+            setTimeout(applyViewportSize, 200);
 
             loadingBar.style.display = "block";
 
