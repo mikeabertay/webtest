@@ -588,48 +588,5 @@
       };
       window._ScaleRate = 1;
     </script>
-  
-    <!-- ===== WebGL StreamingAssets HTML5 Video (Mobile Safe) ===== -->
-    <video
-      id="unityVideo"
-      playsinline
-      webkit-playsinline
-      preload="auto"
-      style="
-        position: fixed;
-        inset: 0;
-        width: 100vw;
-        height: 100vh;
-        background: black;
-        display: none;
-        z-index: 9999;">
-    </video>
-
-    <script>
-      // Called from Unity (WebGL) via DllImport("__Internal")
-      function WebGL_PlayVideo(url, loop, mute) {
-        const v = document.getElementById("unityVideo");
-        v.src = url;
-        v.loop = !!loop;
-        v.muted = !!mute;
-
-        // Ensure video can play on iOS (requires user gesture from Unity button)
-        v.currentTime = 0;
-        v.style.display = "block";
-
-        const p = v.play();
-        if (p && typeof p.catch === "function") {
-          p.catch((e) => console.log("video play blocked:", e));
-        }
-      }
-
-      function WebGL_StopVideo() {
-        const v = document.getElementById("unityVideo");
-        try { v.pause(); } catch (e) {}
-        v.style.display = "none";
-      }
-    </script>
-    <!-- ===== End WebGL Video ===== -->
-
   </body>
 </html>
